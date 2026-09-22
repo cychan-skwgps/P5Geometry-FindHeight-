@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幾何圖形「底與高」兒童直覺互動學習單</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 圖標 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti 慶祝特效 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Inter 字型 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .step-card {
+            transition: all 0.3s ease;
+        }
+        .step-active {
+            border-color: #2563EB;
+            background-color: #EFF6FF;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+            transform: translateY(-2px);
+        }
+        .step-completed {
+            border-color: #10B981;
+            background-color: #ECFDF5;
+        }
+        .rotate-cursor {
+            cursor: grab;
+        }
+        .rotate-cursor:active {
+            cursor: grabbing;
+        }
+        .vertex-hit {
+            cursor: pointer;
+        }
+        .vertex-hit:hover {
+            animation: vertex-blink 0.8s ease-in-out infinite;
+        }
+        @keyframes vertex-blink {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.2; }
+        }
+        .shake-error {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen overflow-hidden flex flex-col justify-between">
+
+    <!-- 頂部標題與模式選擇 -->
+    <header class="bg-white shadow-md border-b-2 border-slate-200 sticky top-0 z-20 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 py-2 md:py-2.5 flex flex-wrap justify-between items-center gap-2">
+            
+            <div class="flex items-center gap-2.5">
+                <div class="bg-blue-600 text-white p-2 md:p-2.5 rounded-2xl shadow-lg">
+                    <i class="fa-solid font-bold text-2xl md:text-3xl fa-shapes"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl md:text-2xl text-slate-900 tracking-wide">幾何圖形「底與高」大冒險</h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-semibold">對照課本概念：3組底高、上底與下底</p>
+                </div>
+            </div>
+
+            <!-- 圖形切換頁籤 -->
+            <div class="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-300 gap-1 flex-wrap">
+                <button id="btn-mode-triangle" onclick="changeShapeMode('triangle')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-blue-600 text-white shadow">
+                    🔺 三角形
+                </button>
+                <button id="btn-mode-parallelogram" onclick="changeShapeMode('parallelogram')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
+                    ▰ 平行四邊形
+                </button>
+                <button id="btn-mode-trapezoid" onclick="changeShapeMode('trapezoid')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
+                    ⏍ 梯形
+                </button>
+                
+                <!-- 比賽模式切換按鈕 -->
+                <button id="btn-mode-challenge" onclick="startChallengeMode()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:brightness-110 active:scale-95">
+                    ⏱️ 1分鐘比賽模式
+                </button>
+            </div>
+
+            <!-- 得分與功能按鈕 -->
+            <div class="flex items-center gap-2 md:gap-3">
+                <div id="timer-box" class="hidden bg-amber-50 text-amber-900 px-3.5 py-1.5 rounded-2xl border-2 border-amber-400 font-extrabold text-base md:text-lg flex items-center gap-2 shadow-sm animate-pulse">
+                    <i class="fa-solid fa-stopwatch text-amber-600 text-xl"></i>
+                    <span>剩餘：<span id="timer-count" class="text-xl text-amber-700 font-black">60</span> 秒</span>
+                </div>
+
+                <div class="bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-2xl border-2 border-emerald-300 font-extrabold text-sm md:text-base flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-trophy text-amber-500 text-lg"></i>
+                    <span>得分：<span id="score-count" class="text-lg text-emerald-600 font-black">0</span> 題</span>
+                </div>
+
+                <!-- 排行榜按鈕 -->
+                <button id="btn-open-leaderboard" onclick="openLeaderboardModal()" class="bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border-2 border-amber-300 font-extrabold px-3 py-1.5 rounded-2xl text-sm md:text-base shadow-sm transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-ranking-star text-amber-600"></i> 排行榜
+                </button>
+
+                <button id="btn-next-question" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-3.5 py-1.5 rounded-2xl text-sm md:text-base shadow-md transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 換下一題
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區 (單一整合大畫布區塊) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-2.5 md:p-4 flex flex-col min-h-0 overflow-hidden">
+
+        <section class="bg-white rounded-3xl p-3 md:p-4 border-2 border-slate-200 shadow-md flex flex-col justify-between relative overflow-hidden flex-1 min-h-0">
+            
+            <!-- 頂部資訊列：題目說明 + 切換底邊條 -->
+            <div class="flex flex-col gap-2 mb-1 shrink-0">
+                <!-- 標題與對照按鈕列 -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <span id="shape-subtitle" class="font-extrabold text-slate-800 text-base md:text-lg">
+                            目前挑戰：<span id="current-shape-name" class="text-blue-600 font-black">三角形</span>
+                        </span>
+                    </div>
+                    <button id="btn-show-3-sets" onclick="open3SetsModal()" class="hidden bg-emerald-100 text-emerald-800 border-2 border-emerald-300 px-3 py-1 rounded-xl text-xs md:text-sm font-extrabold hover:bg-emerald-200 transition flex items-center gap-1.5">
+                        📐 觀看 3 組底與高觀念
+                    </button>
+                </div>
+
+                <!-- 切換底邊選擇條 -->
+                <div id="base-selector-bar" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2 flex items-center justify-between gap-2 flex-wrap">
+                    <span class="font-extrabold text-slate-700 text-xs md:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-blue-600"></i> 指定「底」邊：
+                    </span>
+                    <div id="base-buttons-container" class="flex items-center gap-2">
+                        <!-- 動態生成底邊按鈕 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 整合互動區 (左側圖形畫布 + 右側內嵌 4 個步驟卡片) -->
+            <div id="canvas-container" class="relative w-full flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-3 my-1 touch-none select-none min-h-0 bg-slate-50/50 border-2 border-slate-100 rounded-2xl p-2 overflow-hidden">
+                
+                <!-- 左側/中央幾何圖形畫布 -->
+                <div class="relative flex-1 w-full flex items-center justify-center min-h-0 h-full overflow-hidden">
+                    <svg id="geo-canvas" class="w-full h-full max-h-full max-w-[650px] overflow-visible rotate-cursor" viewBox="-300 -220 600 440">
+                        <!-- 水平參考輔助線 -->
+                        <line x1="-280" y1="120" x2="280" y2="120" stroke="#94A3B8" stroke-dasharray="8 8" stroke-width="3"/>
+                        <text x="140" y="108" font-size="20" font-weight="extrabold" fill="#64748B">水平底線位置</text>
+
+                        <!-- 動態旋轉幾何群組 -->
+                        <g id="triangle-group" transform="rotate(0)">
+                            <!-- 圖形填充面 -->
+                            <polygon id="poly-shape" points="0,0 0,0 0,0" fill="#E0F2FE" stroke="#0284C7" stroke-width="6" stroke-linejoin="round" class="transition-colors duration-300"/>
+                            
+                            <!-- 底邊高亮粗線 (藍色) -->
+                            <line id="base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="8" stroke-linecap="round"/>
+                            
+                            <!-- 梯形上底高亮線 (藍色) -->
+                            <line id="top-base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="8" stroke-linecap="round" opacity="0"/>
+
+                            <!-- 「底」字標籤 -->
+                            <g id="base-label-group">
+                                <text id="base-label-text" x="0" y="2" text-anchor="middle" dominant-baseline="central" fill="#2563EB" stroke="#FFFFFF" stroke-width="4" paint-order="stroke fill" font-weight="900" font-size="28">底</text>
+                            </g>
+
+                            <!-- 梯形專用「上底」標籤 -->
+                            <g id="top-base-label-group" opacity="0">
+                                <text id="top-base-label-text" x="0" y="2" text-anchor="middle" dominant-baseline="central" fill="#2563EB" stroke="#FFFFFF" stroke-width="4" paint-order="stroke fill" font-weight="900" font-size="28">上底</text>
+                            </g>
+
+                            <!-- 底邊延長虛線 -->
+                            <line id="base-extension" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="4" stroke-dasharray="8 8" opacity="0"/>
+
+                            <!-- 垂直高線 (紅色) -->
+                            <line id="height-line" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="4" stroke-dasharray="8 8" opacity="0"/>
+                            
+                            <!-- 直角符號 ∟ -->
+                            <path id="right-angle-symbol" d="" fill="rgba(239,68,68,0.2)" stroke="#EF4444" stroke-width="4" opacity="0"/>
+
+                            <!-- 動態頂點觸控區與標示 -->
+                            <g id="vertices-group">
+                                <circle id="vertex-hit-0" class="vertex-hit" r="32" fill="transparent" />
+                                <circle id="vertex-hit-1" class="vertex-hit" r="32" fill="transparent" />
+                                <circle id="vertex-hit-2" class="vertex-hit" r="32" fill="transparent" />
+                                <circle id="vertex-hit-3" class="vertex-hit" r="32" fill="transparent" />
+
+                                <circle id="vertex-0" class="transition-all duration-300" r="10" fill="#000000" stroke="#FFFFFF" stroke-width="3" opacity="0"/>
+                                <circle id="vertex-1" class="transition-all duration-300" r="10" fill="#000000" stroke="#FFFFFF" stroke-width="3" opacity="0"/>
+                                <circle id="vertex-2" class="transition-all duration-300" r="10" fill="#000000" stroke="#FFFFFF" stroke-width="3" opacity="0"/>
+                                <circle id="vertex-3" class="transition-all duration-300" r="10" fill="#000000" stroke="#FFFFFF" stroke-width="3" opacity="0"/>
+                            </g>
+
+                            <!-- 自動標示「高」標籤 -->
+                            <g id="placed-height-label" opacity="0" class="transition-opacity duration-300">
+                                <text id="height-label-text" x="0" y="2" text-anchor="middle" dominant-baseline="central" fill="#EF4444" stroke="#FFFFFF" stroke-width="4" paint-order="stroke fill" font-weight="900" font-size="28">高</text>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- 右側內嵌步驟任務卡 (垂直排列於畫布右側) -->
+                <div class="w-full lg:w-72 xl:w-80 flex flex-col justify-center gap-2 shrink-0 z-10 overflow-y-auto max-h-full">
+                    <!-- 步驟 1 -->
+                    <div id="card-step-1" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between shadow-sm transition-all">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">1</div>
+                            <div class="truncate">
+                                <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">1. 旋轉圖形擺正</h3>
+                                <p class="text-[11px] text-slate-500 font-bold truncate">將指定「底」轉至正下方</p>
+                            </div>
+                        </div>
+                        <div class="step-status shrink-0 ml-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
+                        </div>
+                    </div>
+
+                    <!-- 步驟 2 -->
+                    <div id="card-step-2" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between opacity-50 shadow-sm transition-all">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">2</div>
+                            <div class="truncate">
+                                <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">2. 揀選頂點/上底</h3>
+                                <p id="step-2-desc" class="text-[11px] text-slate-500 font-bold truncate">點擊「底」正對面頂點</p>
+                            </div>
+                        </div>
+                        <div class="step-status shrink-0 ml-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
+                        </div>
+                    </div>
+
+                    <!-- 步驟 3 -->
+                    <div id="card-step-3" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between opacity-50 shadow-sm transition-all">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">3</div>
+                            <div class="truncate">
+                                <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">3. 拉出垂直高線</h3>
+                                <p class="text-[11px] text-slate-500 font-bold truncate">精準瞄準垂足拖拉</p>
+                            </div>
+                        </div>
+                        <div class="step-status shrink-0 ml-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
+                        </div>
+                    </div>
+
+                    <!-- 步驟 4 -->
+                    <div id="card-step-4" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between opacity-50 shadow-sm transition-all">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">4</div>
+                            <div class="truncate">
+                                <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">4. 自動標示「高」</h3>
+                                <p class="text-[11px] text-slate-500 font-bold truncate">呈現高標籤與直角</p>
+                            </div>
+                        </div>
+                        <div class="step-status shrink-0 ml-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 成功通關提示浮層 (改為懸浮在畫布區域上方，不推擠頁面高度) -->
+                <div id="success-banner" class="hidden absolute bottom-3 left-3 right-3 bg-emerald-500 text-white p-3 md:p-3.5 rounded-2xl shadow-2xl text-center flex flex-wrap items-center justify-between gap-2 animate-bounce z-30 border-2 border-emerald-300">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-trophy text-amber-300 text-2xl md:text-3xl"></i>
+                        <div class="text-left">
+                            <div class="text-lg md:text-xl font-black">答對了！太棒了！</div>
+                            <p id="success-tip-text" class="text-xs md:text-sm text-emerald-100 font-bold">成功擺正圖形，並親手畫出了精準的垂直高！</p>
+                        </div>
+                    </div>
+                    <button id="btn-next-success" class="bg-white text-emerald-800 font-black px-4 py-2 rounded-xl shadow-md text-sm md:text-base hover:bg-emerald-50 transition flex items-center gap-2 shrink-0">
+                        挑戰下一題 <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 彈窗 1：觀看 3 組底高 Modal -->
+    <div id="modal-3sets" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300 p-4">
+        <div class="bg-white border-4 border-blue-400 rounded-3xl p-6 max-w-4xl w-full shadow-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-shapes text-blue-600"></i> 三角形的 3 組「底」與「高」觀念對照
+                </h3>
+                <button onclick="close3SetsModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">✕</button>
+            </div>
+
+            <p class="text-base text-slate-600 font-bold">
+                同一個三角形中，可以選擇任何一個邊作為「底」。每一個「底」都有對應的一條「高」！
+            </p>
+
+            <div id="sets-preview-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 my-2">
+                <!-- JS 動態生成 3 組小 SVG -->
+            </div>
+
+            <div class="bg-blue-50 border-2 border-blue-200 p-3.5 rounded-2xl text-blue-900 text-sm font-bold flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-500 text-xl shrink-0"></i>
+                <span>小提醒：無論選擇哪一個邊當底，作圖的高都必須垂直於該底邊（或其延長線）！</span>
+            </div>
+
+            <button onclick="close3SetsModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-2.5 rounded-2xl text-lg transition self-center px-8">
+                了解，返回練習
+            </button>
+        </div>
+    </div>
+
+    <!-- 彈窗 2：比賽模式結算 Modal -->
+    <div id="challenge-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300 p-4">
+        <div class="bg-white border-4 border-amber-400 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl text-center flex flex-col items-center gap-4 relative">
+            <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center border-4 border-amber-300 text-amber-500 text-4xl shadow-inner mb-1">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            
+            <h2 class="text-3xl md:text-4xl font-black text-slate-900">時間到！挑戰結束！</h2>
+            <p class="text-slate-600 text-lg font-bold">1分鐘混合圖形底高挑戰賽</p>
+            
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 w-full flex justify-around items-center my-2">
+                <div class="flex flex-col items-center">
+                    <span class="text-sm text-amber-800 font-bold">本次答對</span>
+                    <span id="final-score" class="text-4xl font-black text-amber-600">0 題</span>
+                </div>
+                <div class="h-10 w-0.5 bg-amber-200"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-sm text-amber-800 font-bold">歷史最高</span>
+                    <span id="high-score" class="text-4xl font-black text-emerald-600">0 題</span>
+                </div>
+            </div>
+
+            <div id="performance-badge" class="bg-blue-100 text-blue-900 px-4 py-2 rounded-xl text-lg font-extrabold w-full">
+                稱號：幾何小高手！
+            </div>
+
+            <!-- 姓名輸入與紀錄區域 -->
+            <div id="name-input-section" class="w-full bg-slate-50 border-2 border-slate-200 p-3.5 rounded-2xl flex flex-col gap-2 my-1">
+                <label for="player-name-input" class="text-sm font-extrabold text-slate-700 flex items-center gap-1.5 justify-center">
+                    <i class="fa-solid fa-user-pen text-blue-600"></i> 請輸入姓名，登錄英雄榜：
+                </label>
+                <div class="flex items-center gap-2">
+                    <input id="player-name-input" type="text" placeholder="例如：王小明" maxlength="10" class="flex-1 px-3 py-2 border-2 border-slate-300 rounded-xl font-extrabold text-slate-800 text-center text-base focus:outline-none focus:border-blue-500">
+                    <button id="btn-save-score" onclick="submitChallengeScore()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black px-4 py-2 rounded-xl text-base transition shadow shrink-0">
+                        登錄成績
+                    </button>
+                </div>
+                <p id="save-status-msg" class="text-xs font-bold text-emerald-600 hidden text-center"></p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full mt-2">
+                <button onclick="startChallengeMode()" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black py-3 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 text-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 再挑戰一次
+                </button>
+                <button onclick="exitChallengeMode()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold px-5 py-3 rounded-2xl text-lg transition">
+                    返回練習
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈窗 3：本地排行榜 Modal -->
+    <div id="modal-leaderboard" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300 p-4">
+        <div class="bg-white border-4 border-amber-400 rounded-3xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-ranking-star text-amber-500 text-3xl"></i> 本地挑戰排行榜 TOP 10
+                </h3>
+                <button onclick="closeLeaderboardModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">✕</button>
+            </div>
+
+            <div id="leaderboard-list" class="flex flex-col gap-2 my-1">
+                <!-- JS 動態呈現排行榜數據 -->
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+                <button onclick="clearLeaderboard()" class="text-xs font-extrabold text-rose-500 hover:text-rose-700 underline flex items-center gap-1">
+                    <i class="fa-solid fa-trash-can"></i> 清除歷史紀錄
+                </button>
+                <button onclick="closeLeaderboardModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-6 py-2 rounded-xl text-base transition">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 核心全域狀態
+        let shapeMode = 'triangle'; // 'triangle', 'parallelogram', 'trapezoid'
+        let activeBaseIndex = 0;    // 當前指定的底邊索引
+        let currentStep = 1;        // 1: 旋轉, 2: 選頂點, 3: 劃高線, 4: 自動完成, 5: 成功結算
+
+        // 比賽模式狀態
+        let isChallenge = false;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let challengeScore = 0;
+        let completedCount = 0;
+        let maxScore = 0;
+
+        // 精準度設定：由 10 調高至 2 單位，要求學生更精準瞄準垂足點
+        const ACCURACY_TOLERANCE = 2;
+
+        // 圖形幾何數據結構
+        let shapeData = {
+            vertices: [],          // [{x,y}, ...] (相對於原點 (0,0))
+            rotation: 0,           // 當前旋轉角度 (度)
+            targetRotation: 0,     // 擺正時目標旋轉角度
+            validOpposites: [],    // 對面合法頂點索引陣列
+            chosenVertexIndex: -1, // 學生選擇的頂點索引
+            currentDrawPoint: null // 學生拉高線時的當前點 {x,y}
+        };
+
+        // DOM 元素引用
+        const geoCanvas = document.getElementById('geo-canvas');
+        const triangleGroup = document.getElementById('triangle-group');
+        const polyShape = document.getElementById('poly-shape');
+        const baseEdge = document.getElementById('base-edge');
+        const topBaseEdge = document.getElementById('top-base-edge');
+        const baseExtension = document.getElementById('base-extension');
+        const heightLine = document.getElementById('height-line');
+        const rightAngleSymbol = document.getElementById('right-angle-symbol');
+        const placedHeightLabel = document.getElementById('placed-height-label');
+
+        const scoreCount = document.getElementById('score-count');
+        const timerBox = document.getElementById('timer-box');
+        const timerCount = document.getElementById('timer-count');
+        const challengeModal = document.getElementById('challenge-modal');
+        const finalScoreEl = document.getElementById('final-score');
+        const highScoreEl = document.getElementById('high-score');
+        const performanceBadge = document.getElementById('performance-badge');
+        const successBanner = document.getElementById('success-banner');
+
+        // 讀取歷史最高分數
+        try {
+            maxScore = parseInt(localStorage.getItem('geo_high_score') || '0', 10);
+        } catch (e) {
+            maxScore = 0;
+        }
+
+        // --- 模式切換與底邊選擇 ---
+        function changeShapeMode(mode) {
+            if (isChallenge) return;
+            shapeMode = mode;
+            activeBaseIndex = 0;
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200";
+            });
+
+            const activeBtn = document.getElementById(`btn-mode-${mode}`);
+            if (activeBtn) {
+                activeBtn.className = "mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-blue-600 text-white shadow";
+            }
+
+            const nameMap = { triangle: '三角形', parallelogram: '平行四邊形', trapezoid: '梯形' };
+            document.getElementById('current-shape-name').textContent = nameMap[mode];
+
+            const btn3Sets = document.getElementById('btn-show-3-sets');
+            if (mode === 'triangle') btn3Sets.classList.remove('hidden');
+            else btn3Sets.classList.add('hidden');
+
+            updateBaseButtons();
+            generateShape();
+        }
+
+        function updateBaseButtons() {
+            const container = document.getElementById('base-buttons-container');
+            container.innerHTML = '';
+
+            let count = 3;
+            if (shapeMode === 'parallelogram') count = 2;
+            if (shapeMode === 'trapezoid') count = 1;
+
+            for (let i = 0; i < count; i++) {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1 rounded-xl text-xs md:text-sm font-black border-2 transition ${
+                    i === activeBaseIndex
+                        ? 'bg-blue-600 text-white border-blue-600 shadow'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`;
+                btn.textContent = count === 1 ? '底邊 (下底)' : `底邊 ${i + 1}`;
+                btn.onclick = () => selectBaseEdge(i);
+                container.appendChild(btn);
+            }
+        }
+
+        function selectBaseEdge(index) {
+            activeBaseIndex = index;
+            updateBaseButtons();
+            updateValidOpposites();
+            currentStep = 1;
+            shapeData.chosenVertexIndex = -1;
+            shapeData.currentDrawPoint = null;
+            calculateTargetRotation();
+            renderShape();
+            updateStepUI();
+        }
+
+        function updateValidOpposites() {
+            const n = shapeData.vertices.length;
+            if (n === 0) return;
+
+            if (shapeMode === 'triangle') {
+                shapeData.validOpposites = [(activeBaseIndex + 2) % 3];
+            } else if (shapeMode === 'parallelogram') {
+                if (activeBaseIndex === 0) shapeData.validOpposites = [2, 3];
+                else shapeData.validOpposites = [0, 3];
+            } else if (shapeMode === 'trapezoid') {
+                shapeData.validOpposites = [2, 3];
+            }
+        }
+
+        function calculateTargetRotation() {
+            const v = shapeData.vertices;
+            if (!v || v.length === 0) return;
+
+            let pA = v[activeBaseIndex];
+            let pB = v[(activeBaseIndex + 1) % v.length];
+
+            let dx = pB.x - pA.x;
+            let dy = pB.y - pA.y;
+            let edgeAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            let target = -edgeAngle;
+            shapeData.targetRotation = ((target % 360) + 360) % 360;
+        }
+
+        function calculatePerpendicularFoot(pP, pA, pB) {
+            let dx = pB.x - pA.x;
+            let dy = pB.y - pA.y;
+            let lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return { x: pA.x, y: pA.y, t: 0 };
+
+            let t = ((pP.x - pA.x) * dx + (pP.y - pA.y) * dy) / lenSq;
+            let footX = pA.x + t * dx;
+            let footY = pA.y + t * dy;
+
+            return { x: footX, y: footY, t: t };
+        }
+
+        function renderShape() {
+            const v = shapeData.vertices;
+            if (!v || v.length === 0) return;
+
+            triangleGroup.setAttribute('transform', `rotate(${shapeData.rotation})`);
+
+            const ptsStr = v.map(pt => `${pt.x},${pt.y}`).join(' ');
+            polyShape.setAttribute('points', ptsStr);
+
+            let pA = v[activeBaseIndex];
+            let pB = v[(activeBaseIndex + 1) % v.length];
+
+            baseEdge.setAttribute('x1', pA.x);
+            baseEdge.setAttribute('y1', pA.y);
+            baseEdge.setAttribute('x2', pB.x);
+            baseEdge.setAttribute('y2', pB.y);
+
+            let baseMidX = (pA.x + pB.x) / 2;
+            let baseMidY = (pA.y + pB.y) / 2;
+            const baseLabelGroup = document.getElementById('base-label-group');
+            baseLabelGroup.setAttribute('transform', `translate(${baseMidX}, ${baseMidY + 28}) rotate(${-shapeData.rotation})`);
+
+            const baseLabelText = document.getElementById('base-label-text');
+
+            if (shapeMode === 'trapezoid') {
+                baseLabelText.textContent = '下底';
+                let pTop1 = v[2];
+                let pTop2 = v[3];
+                topBaseEdge.setAttribute('x1', pTop1.x);
+                topBaseEdge.setAttribute('y1', pTop1.y);
+                topBaseEdge.setAttribute('x2', pTop2.x);
+                topBaseEdge.setAttribute('y2', pTop2.y);
+                topBaseEdge.setAttribute('opacity', '1');
+
+                let topMidX = (pTop1.x + pTop2.x) / 2;
+                let topMidY = (pTop1.y + pTop2.y) / 2;
+                const topBaseLabelGroup = document.getElementById('top-base-label-group');
+                topBaseLabelGroup.setAttribute('transform', `translate(${topMidX}, ${topMidY - 28}) rotate(${-shapeData.rotation})`);
+                topBaseLabelGroup.setAttribute('opacity', '1');
+            } else {
+                baseLabelText.textContent = '底';
+                topBaseEdge.setAttribute('opacity', '0');
+                document.getElementById('top-base-label-group').setAttribute('opacity', '0');
+            }
+
+            v.forEach((pt, idx) => {
+                const circle = document.getElementById(`vertex-${idx}`);
+                const hit = document.getElementById(`vertex-hit-${idx}`);
+                if (circle && hit) {
+                    circle.setAttribute('cx', pt.x);
+                    circle.setAttribute('cy', pt.y);
+                    hit.setAttribute('cx', pt.x);
+                    hit.setAttribute('cy', pt.y);
+
+                    if (idx === shapeData.chosenVertexIndex) {
+                        circle.setAttribute('opacity', '1');
+                    } else {
+                        circle.setAttribute('opacity', '0');
+                    }
+                }
+            });
+
+            if (currentStep >= 3 && shapeData.chosenVertexIndex !== -1) {
+                let startPt = v[shapeData.chosenVertexIndex];
+                let foot = calculatePerpendicularFoot(startPt, pA, pB);
+
+                let drawEnd = shapeData.currentDrawPoint || startPt;
+                if (currentStep >= 4) {
+                    drawEnd = foot;
+                }
+
+                heightLine.setAttribute('x1', startPt.x);
+                heightLine.setAttribute('y1', startPt.y);
+                heightLine.setAttribute('x2', drawEnd.x);
+                heightLine.setAttribute('y2', drawEnd.y);
+                heightLine.setAttribute('opacity', '1');
+
+                if (foot.t < 0 || foot.t > 1) {
+                    let extStart = foot.t < 0 ? pA : pB;
+                    baseExtension.setAttribute('x1', extStart.x);
+                    baseExtension.setAttribute('y1', extStart.y);
+                    baseExtension.setAttribute('x2', foot.x);
+                    baseExtension.setAttribute('y2', foot.y);
+                    baseExtension.setAttribute('opacity', '1');
+                } else {
+                    baseExtension.setAttribute('opacity', '0');
+                }
+
+                if (currentStep >= 4) {
+                    placedHeightLabel.setAttribute('opacity', '1');
+                    let hMidX = (startPt.x + foot.x) / 2;
+                    let hMidY = (startPt.y + foot.y) / 2;
+                    placedHeightLabel.setAttribute('transform', `translate(${hMidX - 28}, ${hMidY}) rotate(${-shapeData.rotation})`);
+
+                    let dx = pB.x - pA.x;
+                    let dy = pB.y - pA.y;
+                    let len = Math.hypot(dx, dy);
+                    if (len > 0) {
+                        let ux = dx / len;
+                        let uy = dy / len;
+                        let vx = -uy;
+                        let vy = ux;
+
+                        let toTopX = startPt.x - foot.x;
+                        let toTopY = startPt.y - foot.y;
+                        if (vx * toTopX + vy * toTopY < 0) {
+                            vx = -vx;
+                            vy = -vy;
+                        }
+
+                        let midX = (pA.x + pB.x) / 2;
+                        let midY = (pA.y + pB.y) / 2;
+                        let toMidX = midX - foot.x;
+                        let toMidY = midY - foot.y;
+                        if (ux * toMidX + uy * toMidY < 0) {
+                            ux = -ux;
+                            uy = -uy;
+                        }
+
+                        let size = 18;
+                        let p1 = { x: foot.x + ux * size, y: foot.y + uy * size };
+                        let p2 = { x: foot.x + ux * size + vx * size, y: foot.y + uy * size + vy * size };
+                        let p3 = { x: foot.x + vx * size, y: foot.y + vy * size };
+
+                        rightAngleSymbol.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+                        rightAngleSymbol.setAttribute('opacity', '1');
+                    }
+                } else {
+                    placedHeightLabel.setAttribute('opacity', '0');
+                    rightAngleSymbol.setAttribute('opacity', '0');
+                }
+            } else {
+                heightLine.setAttribute('opacity', '0');
+                baseExtension.setAttribute('opacity', '0');
+                placedHeightLabel.setAttribute('opacity', '0');
+                rightAngleSymbol.setAttribute('opacity', '0');
+            }
+        }
+
+        function updateStepUI() {
+            const desc2 = document.getElementById('step-2-desc');
+            if (desc2) {
+                if (shapeMode === 'trapezoid') {
+                    desc2.textContent = '點擊上底任意頂點';
+                } else {
+                    desc2.textContent = '點擊「底」正對面頂點';
+                }
+            }
+
+            for (let i = 1; i <= 4; i++) {
+                const card = document.getElementById(`card-step-${i}`);
+                if (!card) continue;
+                const icon = card.querySelector('.status-check');
+                if (i < currentStep || currentStep === 5) {
+                    card.className = "step-card step-completed border-2 bg-white p-3 rounded-2xl flex items-center justify-between";
+                    if (icon) icon.classList.remove('hidden');
+                } else if (i === currentStep) {
+                    card.className = "step-card step-active border-2 bg-white p-3 rounded-2xl flex items-center justify-between";
+                    if (icon) icon.classList.add('hidden');
+                } else {
+                    card.className = "step-card border-2 border-slate-200 bg-white p-3 rounded-2xl flex items-center justify-between opacity-50";
+                    if (icon) icon.classList.add('hidden');
+                }
+            }
+        }
+
+        let isDraggingRotation = false;
+        let startAngle = 0;
+        let initialShapeRotation = 0;
+        let isDraggingHeight = false;
+
+        function getSVGPoint(e) {
+            const pt = geoCanvas.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const ctm = geoCanvas.getScreenCTM();
+            if (ctm) {
+                return pt.matrixTransform(ctm.inverse());
+            }
+            return { x: 0, y: 0 };
+        }
+
+        geoCanvas.addEventListener('pointerdown', (e) => {
+            let p = getSVGPoint(e);
+
+            if (currentStep === 1) {
+                isDraggingRotation = true;
+                startAngle = Math.atan2(p.y, p.x) * (180 / Math.PI);
+                initialShapeRotation = shapeData.rotation;
+                geoCanvas.setPointerCapture(e.pointerId);
+            } else if (currentStep === 2) {
+                let v = shapeData.vertices;
+                let rad = shapeData.rotation * (Math.PI / 180);
+                let cos = Math.cos(rad);
+                let sin = Math.sin(rad);
+
+                let clickedIdx = -1;
+                v.forEach((pt, idx) => {
+                    let rx = pt.x * cos - pt.y * sin;
+                    let ry = pt.x * sin + pt.y * cos;
+                    let dist = Math.hypot(p.x - rx, p.y - ry);
+                    if (dist < 45) {
+                        clickedIdx = idx;
+                    }
+                });
+
+                if (clickedIdx !== -1) {
+                    if (shapeData.validOpposites.includes(clickedIdx)) {
+                        shapeData.chosenVertexIndex = clickedIdx;
+                        currentStep = 3;
+                        renderShape();
+                        updateStepUI();
+                    } else {
+                        const step2Card = document.getElementById('card-step-2');
+                        if (step2Card) {
+                            step2Card.classList.add('shake-error');
+                            setTimeout(() => step2Card.classList.remove('shake-error'), 400);
+                        }
+                    }
+                }
+            } else if (currentStep === 3) {
+                let rad = shapeData.rotation * (Math.PI / 180);
+                let cos = Math.cos(rad);
+                let sin = Math.sin(rad);
+
+                let startPt = shapeData.vertices[shapeData.chosenVertexIndex];
+                let rx = startPt.x * cos - startPt.y * sin;
+                let ry = startPt.x * sin + startPt.y * cos;
+
+                let dist = Math.hypot(p.x - rx, p.y - ry);
+                if (dist < 50) {
+                    isDraggingHeight = true;
+                    geoCanvas.setPointerCapture(e.pointerId);
+                }
+            }
+        });
+
+        geoCanvas.addEventListener('pointermove', (e) => {
+            if (!isDraggingRotation && !isDraggingHeight) return;
+            let p = getSVGPoint(e);
+
+            if (isDraggingRotation && currentStep === 1) {
+                let currentAngle = Math.atan2(p.y, p.x) * (180 / Math.PI);
+                let delta = currentAngle - startAngle;
+                let newRot = (initialShapeRotation + delta) % 360;
+                if (newRot < 0) newRot += 360;
+
+                let diff = Math.abs(newRot - shapeData.targetRotation);
+                if (diff > 180) diff = 360 - diff;
+
+                if (diff < 8) {
+                    shapeData.rotation = shapeData.targetRotation;
+                    isDraggingRotation = false;
+                    currentStep = 2;
+                    updateStepUI();
+                } else {
+                    shapeData.rotation = newRot;
+                }
+                renderShape();
+            } else if (isDraggingHeight && currentStep === 3) {
+                let rad = -shapeData.rotation * (Math.PI / 180);
+                let cos = Math.cos(rad);
+                let sin = Math.sin(rad);
+                let localP = {
+                    x: p.x * cos - p.y * sin,
+                    y: p.x * sin + p.y * cos
+                };
+
+                shapeData.currentDrawPoint = localP;
+
+                let v = shapeData.vertices;
+                let pA = v[activeBaseIndex];
+                let pB = v[(activeBaseIndex + 1) % v.length];
+                let startPt = v[shapeData.chosenVertexIndex];
+                let foot = calculatePerpendicularFoot(startPt, pA, pB);
+
+                let distToFoot = Math.hypot(localP.x - foot.x, localP.y - foot.y);
+
+                if (distToFoot <= ACCURACY_TOLERANCE) {
+                    isDraggingHeight = false;
+                    completeChallenge();
+                } else {
+                    renderShape();
+                }
+            }
+        });
+
+        geoCanvas.addEventListener('pointerup', (e) => {
+            if (isDraggingRotation) isDraggingRotation = false;
+            if (isDraggingHeight) isDraggingHeight = false;
+            try {
+                geoCanvas.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+        });
+
+        function generateShape() {
+            currentStep = 1;
+            shapeData.chosenVertexIndex = -1;
+            shapeData.currentDrawPoint = null;
+
+            const yBase = 120;
+            let v = [];
+
+            const isShortShape = Math.random() < 0.45;
+
+            if (shapeMode === 'triangle') {
+                const L = Math.floor(Math.random() * 80) + 240;
+                const H = isShortShape ? Math.floor(Math.random() * 45) + 65 : Math.floor(Math.random() * 80) + 150;
+                const tRatio = Math.random() * 1.3 - 0.15;
+
+                const x0 = -L / 2;
+                const x1 = L / 2;
+                const xTop = x0 + tRatio * (x1 - x0);
+                const yTop = yBase - H;
+
+                v = [
+                    { x: x0, y: yBase },
+                    { x: x1, y: yBase },
+                    { x: xTop, y: yTop }
+                ];
+            } else if (shapeMode === 'parallelogram') {
+                const L = Math.floor(Math.random() * 80) + 240;
+                const H = isShortShape ? Math.floor(Math.random() * 45) + 70 : Math.floor(Math.random() * 60) + 150;
+                const skew = Math.floor(Math.random() * 140) - 70;
+
+                const x0 = -L / 2;
+                const x1 = L / 2;
+
+                v = [
+                    { x: x0, y: yBase },
+                    { x: x1, y: yBase },
+                    { x: x1 + skew, y: yBase - H },
+                    { x: x0 + skew, y: yBase - H }
+                ];
+            } else if (shapeMode === 'trapezoid') {
+                const L1 = Math.floor(Math.random() * 80) + 260;
+                const L2 = Math.floor(Math.random() * 60) + 130;
+                const H = isShortShape ? Math.floor(Math.random() * 45) + 70 : Math.floor(Math.random() * 60) + 150;
+                const shift = Math.floor(Math.random() * 80) - 40;
+
+                const x0 = -L1 / 2;
+                const x1 = L1 / 2;
+
+                v = [
+                    { x: x0, y: yBase },
+                    { x: x1, y: yBase },
+                    { x: shift + L2 / 2, y: yBase - H },
+                    { x: shift - L2 / 2, y: yBase - H }
+                ];
+            }
+
+            shapeData.vertices = v;
+            updateValidOpposites();
+
+            shapeData.rotation = Math.floor(Math.random() * 300) - 150;
+            if (Math.abs(shapeData.rotation) < 20) shapeData.rotation = 55;
+
+            calculateTargetRotation();
+            renderShape();
+            updateStepUI();
+
+            successBanner.classList.add('hidden');
+        }
+
+        function completeChallenge() {
+            currentStep = 5;
+            renderShape();
+            updateStepUI();
+
+            if (isChallenge) {
+                challengeScore++;
+                scoreCount.textContent = challengeScore;
+                confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+
+                setTimeout(() => {
+                    if (isChallenge && timeLeft > 0) nextChallengeQuestion();
+                }, 1000);
+            } else {
+                completedCount++;
+                scoreCount.textContent = completedCount;
+
+                const tipText = document.getElementById('success-tip-text');
+                if (shapeMode === 'trapezoid') {
+                    tipText.textContent = "太棒了！精準拉出垂直於「上底」與「下底」的高線！";
+                } else if (shapeMode === 'triangle') {
+                    tipText.textContent = "答對了！可以點擊右上角「觀看 3 組底與高」看看另外兩個邊的高喔！";
+                } else {
+                    tipText.textContent = "成功擺正圖形，並親手畫出了精準的垂直高！";
+                }
+
+                successBanner.classList.remove('hidden');
+                confetti({ particleCount: 120, spread: 100, origin: { y: 0.6 } });
+            }
+        }
+
+        function startChallengeMode() {
+            isChallenge = true;
+            timeLeft = 60;
+            challengeScore = 0;
+            scoreCount.textContent = '0';
+            timerCount.textContent = '60';
+
+            timerBox.classList.remove('hidden');
+            challengeModal.classList.add('hidden');
+            document.getElementById('modal-leaderboard').classList.add('hidden');
+            document.getElementById('modal-3sets').classList.add('hidden');
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCount.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishChallengeMode();
+                }
+            }, 1000);
+
+            nextChallengeQuestion();
+        }
+
+        function nextChallengeQuestion() {
+            const modes = ['triangle', 'parallelogram', 'trapezoid'];
+            const randomMode = modes[Math.floor(Math.random() * modes.length)];
+            shapeMode = randomMode;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200";
+            });
+            const activeBtn = document.getElementById(`btn-mode-${randomMode}`);
+            if (activeBtn) {
+                activeBtn.className = "mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-blue-600 text-white shadow";
+            }
+
+            const nameMap = { triangle: '三角形', parallelogram: '平行四邊形', trapezoid: '梯形' };
+            document.getElementById('current-shape-name').textContent = nameMap[randomMode];
+
+            let count = 3;
+            if (shapeMode === 'parallelogram') count = 2;
+            if (shapeMode === 'trapezoid') count = 1;
+            activeBaseIndex = Math.floor(Math.random() * count);
+
+            updateBaseButtons();
+            generateShape();
+        }
+
+        function finishChallengeMode() {
+            isChallenge = false;
+            timerBox.classList.add('hidden');
+
+            if (challengeScore > maxScore) {
+                maxScore = challengeScore;
+                try {
+                    localStorage.setItem('geo_high_score', maxScore.toString());
+                } catch (e) {}
+            }
+
+            finalScoreEl.textContent = `${challengeScore} 題`;
+            highScoreEl.textContent = `${maxScore} 題`;
+
+            if (challengeScore >= 12) {
+                performanceBadge.textContent = '稱號：幾何超級大師 👑';
+            } else if (challengeScore >= 7) {
+                performanceBadge.textContent = '稱號：幾何資優生 🌟';
+            } else if (challengeScore >= 3) {
+                performanceBadge.textContent = '稱號：幾何小高手 🎯';
+            } else {
+                performanceBadge.textContent = '稱號：幾何探索家 🚀';
+            }
+
+            document.getElementById('save-status-msg').classList.add('hidden');
+            challengeModal.classList.remove('hidden');
+            confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+        }
+
+        function exitChallengeMode() {
+            isChallenge = false;
+            if (timerInterval) clearInterval(timerInterval);
+            timerBox.classList.add('hidden');
+            challengeModal.classList.add('hidden');
+            changeShapeMode('triangle');
+        }
+
+        function getLeaderboardData() {
+            try {
+                const data = localStorage.getItem('geo_leaderboard');
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function submitChallengeScore() {
+            const input = document.getElementById('player-name-input');
+            const name = (input.value || '匿名同學').trim();
+            const scores = getLeaderboardData();
+
+            scores.push({
+                name: name,
+                score: challengeScore,
+                date: new Date().toLocaleDateString('zh-TW')
+            });
+
+            scores.sort((a, b) => b.score - a.score);
+            const top10 = scores.slice(0, 10);
+
+            try {
+                localStorage.setItem('geo_leaderboard', JSON.stringify(top10));
+            } catch (e) {}
+
+            const msg = document.getElementById('save-status-msg');
+            msg.textContent = '✅ 成績已成功登錄英雄榜！';
+            msg.classList.remove('hidden');
+
+            setTimeout(() => {
+                openLeaderboardModal();
+            }, 800);
+        }
+
+        function openLeaderboardModal() {
+            const container = document.getElementById('leaderboard-list');
+            const scores = getLeaderboardData();
+            container.innerHTML = '';
+
+            if (scores.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 font-bold py-6">目前尚無挑戰紀錄，快來進行 1 分鐘比賽模式吧！</div>`;
+            } else {
+                scores.forEach((item, idx) => {
+                    let medal = `<span class="w-7 text-center font-black text-slate-500">${idx + 1}.</span>`;
+                    if (idx === 0) medal = `<span class="w-7 text-center text-xl">🥇</span>`;
+                    if (idx === 1) medal = `<span class="w-7 text-center text-xl">🥈</span>`;
+                    if (idx === 2) medal = `<span class="w-7 text-center text-xl">🥉</span>`;
+
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-2xl font-bold text-slate-800";
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            ${medal}
+                            <span class="font-extrabold text-slate-900">${escapeHtml(item.name)}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-400 font-semibold">${item.date || ''}</span>
+                            <span class="text-emerald-600 font-black text-lg">${item.score} 題</span>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            document.getElementById('modal-leaderboard').classList.remove('hidden');
+        }
+
+        function closeLeaderboardModal() {
+            document.getElementById('modal-leaderboard').classList.add('hidden');
+        }
+
+        function clearLeaderboard() {
+            try {
+                localStorage.removeItem('geo_leaderboard');
+            } catch (e) {}
+            openLeaderboardModal();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        function open3SetsModal() {
+            const container = document.getElementById('sets-preview-container');
+            container.innerHTML = '';
+
+            const v = shapeData.vertices;
+            if (!v || v.length < 3) return;
+
+            for (let i = 0; i < 3; i++) {
+                let pA = v[i];
+                let pB = v[(i + 1) % 3];
+                let pTop = v[(i + 2) % 3];
+
+                let foot = calculatePerpendicularFoot(pTop, pA, pB);
+
+                let extLine = '';
+                if (foot.t < 0 || foot.t > 1) {
+                    let extStart = foot.t < 0 ? pA : pB;
+                    extLine = `<line x1="${extStart.x}" y1="${extStart.y}" x2="${foot.x}" y2="${foot.y}" stroke="#EF4444" stroke-width="3" stroke-dasharray="4 4" />`;
+                }
+
+                // 計算直角符號（朝向圖形內側與底邊中點）
+                let rightAnglePath = '';
+                let dx = pB.x - pA.x;
+                let dy = pB.y - pA.y;
+                let len = Math.hypot(dx, dy);
+                if (len > 0) {
+                    let ux = dx / len;
+                    let uy = dy / len;
+                    let vx = -uy;
+                    let vy = ux;
+
+                    let toTopX = pTop.x - foot.x;
+                    let toTopY = pTop.y - foot.y;
+                    if (vx * toTopX + vy * toTopY < 0) {
+                        vx = -vx;
+                        vy = -vy;
+                    }
+
+                    let midX = (pA.x + pB.x) / 2;
+                    let midY = (pA.y + pB.y) / 2;
+                    let toMidX = midX - foot.x;
+                    let toMidY = midY - foot.y;
+                    if (ux * toMidX + uy * toMidY < 0) {
+                        ux = -ux;
+                        uy = -uy;
+                    }
+
+                    let size = 16;
+                    let p1 = { x: foot.x + ux * size, y: foot.y + uy * size };
+                    let p2 = { x: foot.x + ux * size + vx * size, y: foot.y + uy * size + vy * size };
+                    let p3 = { x: foot.x + vx * size, y: foot.y + vy * size };
+
+                    rightAnglePath = `<path d="M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}" fill="rgba(239,68,68,0.2)" stroke="#EF4444" stroke-width="3" />`;
+                }
+
+                let baseMidX = (pA.x + pB.x) / 2;
+                let baseMidY = (pA.y + pB.y) / 2;
+                let hMidX = (pTop.x + foot.x) / 2;
+                let hMidY = (pTop.y + foot.y) / 2;
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 border-2 border-slate-200 p-3 rounded-2xl flex flex-col items-center gap-2";
+                card.innerHTML = `
+                    <span class="font-extrabold text-blue-700 text-base">第 ${i + 1} 組：以邊 ${i + 1} 當底</span>
+                    <svg class="w-full h-48 overflow-visible" viewBox="-180 -140 360 280">
+                        <polygon points="${v.map(pt => pt.x + ',' + pt.y).join(' ')}" fill="#E0F2FE" stroke="#0284C7" stroke-width="4"/>
+                        <line x1="${pA.x}" y1="${pA.y}" x2="${pB.x}" y2="${pB.y}" stroke="#2563EB" stroke-width="6" stroke-linecap="round"/>
+                        ${extLine}
+                        <line x1="${pTop.x}" y1="${pTop.y}" x2="${foot.x}" y2="${foot.y}" stroke="#EF4444" stroke-width="4" stroke-dasharray="6 6"/>
+                        ${rightAnglePath}
+                        <text x="${baseMidX}" y="${baseMidY + 22}" text-anchor="middle" dominant-baseline="central" fill="#2563EB" stroke="#FFFFFF" stroke-width="3" paint-order="stroke fill" font-weight="900" font-size="20">底</text>
+                        <text x="${hMidX - 18}" y="${hMidY}" text-anchor="middle" dominant-baseline="central" fill="#EF4444" stroke="#FFFFFF" stroke-width="3" paint-order="stroke fill" font-weight="900" font-size="20">高</text>
+                    </svg>
+                `;
+                container.appendChild(card);
+            }
+
+            document.getElementById('modal-3sets').classList.remove('hidden');
+        }
+
+        function close3SetsModal() {
+            document.getElementById('modal-3sets').classList.add('hidden');
+        }
+
+        document.getElementById('btn-next-question').addEventListener('click', () => {
+            if (isChallenge) nextChallengeQuestion();
+            else generateShape();
+        });
+        document.getElementById('btn-next-success').addEventListener('click', () => {
+            if (isChallenge) nextChallengeQuestion();
+            else generateShape();
+        });
+
+        window.onload = function() {
+            changeShapeMode('triangle');
+        };
+    </script>
+</body>
+</html>
