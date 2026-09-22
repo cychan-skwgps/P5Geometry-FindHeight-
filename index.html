@@ -252,38 +252,38 @@
                     </div>
 
                     <!-- 步驟 4 -->
-                    <div id="card-step-4" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between opacity-50 shadow-sm transition-all">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">4</div>
-                            <div class="truncate">
-                                <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">4. 自動標示「高」</h3>
-                                <p class="text-[11px] text-slate-500 font-bold truncate">呈現高標籤與直角</p>
-                            </div>
-                        </div>
-                        <div class="step-status shrink-0 ml-1">
-                            <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
+                <div id="card-step-4" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between opacity-50 shadow-sm transition-all">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="step-num font-black text-sm w-7 h-7 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">4</div>
+                        <div class="truncate">
+                            <h3 class="font-extrabold text-slate-900 text-xs md:text-sm leading-tight truncate">4. 自動標示「高」</h3>
+                            <p class="text-[11px] text-slate-500 font-bold truncate">呈現高標籤與直角</p>
                         </div>
                     </div>
-                </div>
-
-                <!-- 成功通關提示浮層 (改為懸浮在畫布區域上方，不推擠頁面高度) -->
-                <div id="success-banner" class="hidden absolute bottom-3 left-3 right-3 bg-emerald-500 text-white p-3 md:p-3.5 rounded-2xl shadow-2xl text-center flex flex-wrap items-center justify-between gap-2 animate-bounce z-30 border-2 border-emerald-300">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-trophy text-amber-300 text-2xl md:text-3xl"></i>
-                        <div class="text-left">
-                            <div class="text-lg md:text-xl font-black">答對了！太棒了！</div>
-                            <p id="success-tip-text" class="text-xs md:text-sm text-emerald-100 font-bold">成功擺正圖形，並親手畫出了精準的垂直高！</p>
-                        </div>
+                    <div class="step-status shrink-0 ml-1">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-xl hidden status-check"></i>
                     </div>
-                    <button id="btn-next-success" class="bg-white text-emerald-800 font-black px-4 py-2 rounded-xl shadow-md text-sm md:text-base hover:bg-emerald-50 transition flex items-center gap-2 shrink-0">
-                        挑戰下一題 <i class="fa-solid fa-arrow-right"></i>
-                    </button>
                 </div>
-
             </div>
 
-        </section>
-    </main>
+            <!-- 成功通關提示浮層 (正中央翡翠綠半透明玻璃正方形) -->
+            <div id="success-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 md:w-72 md:h-72 bg-gradient-to-br from-emerald-500/85 via-teal-500/85 to-emerald-600/85 backdrop-blur-md text-white p-5 rounded-3xl shadow-2xl shadow-emerald-600/30 text-center flex flex-col items-center justify-between z-30 border-4 border-white/60 transition-all opacity-75">
+                <div class="flex flex-col items-center gap-2 my-auto">
+                    <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/40 shadow-inner mb-1">
+                        <i class="fa-solid fa-trophy text-amber-300 text-3xl md:text-4xl animate-bounce drop-shadow-md"></i>
+                    </div>
+                    <div class="text-2xl md:text-3xl font-black tracking-wide text-white drop-shadow-sm">答對了！</div>
+                    <p id="success-tip-text" class="text-xs md:text-sm text-emerald-50 font-bold leading-relaxed px-1 drop-shadow-sm">成功擺正圖形，並親手畫出了精準的垂直高！</p>
+                </div>
+                <button id="btn-next-success" class="w-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-amber-950 font-black py-2.5 rounded-2xl shadow-xl text-sm md:text-base transition flex items-center justify-center gap-2 border-2 border-amber-200 shrink-0">
+                    挑戰下一題 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+        </div>
+
+    </section>
+</main>
 
     <!-- 彈窗 1：觀看 3 組底高 Modal -->
     <div id="modal-3sets" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-opacity duration-300 p-4">
@@ -404,8 +404,8 @@
         let completedCount = 0;
         let maxScore = 0;
 
-        // 精準度設定：由 10 調高至 2 單位，要求學生更精準瞄準垂足點
-        const ACCURACY_TOLERANCE = 2;
+        // 精準度設定：由 10 調高至 3 單位，要求學生更精準瞄準垂足點
+        const ACCURACY_TOLERANCE = 3;
 
         // 圖形幾何數據結構
         let shapeData = {
@@ -930,7 +930,7 @@
                 if (shapeMode === 'trapezoid') {
                     tipText.textContent = "太棒了！精準拉出垂直於「上底」與「下底」的高線！";
                 } else if (shapeMode === 'triangle') {
-                    tipText.textContent = "答對了！可以點擊右上角「觀看 3 組底與高」看看另外兩個邊的高喔！";
+                    tipText.textContent = "太棒了！可以點擊右上角「觀看 3 組底與高」看看另外兩個邊的高喔！";
                 } else {
                     tipText.textContent = "成功擺正圖形，並親手畫出了精準的垂直高！";
                 }
