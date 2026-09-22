@@ -62,55 +62,33 @@
 
     <!-- 頂部標題與模式選擇 -->
     <header class="bg-white shadow-md border-b-2 border-slate-200 sticky top-0 z-20 shrink-0">
-        <div class="max-w-7xl mx-auto px-4 py-2 md:py-2.5 flex flex-wrap justify-between items-center gap-2">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap justify-between items-center gap-2">
             
             <div class="flex items-center gap-2.5">
-                <div class="bg-blue-600 text-white p-2 md:p-2.5 rounded-2xl shadow-lg">
-                    <i class="fa-solid font-bold text-2xl md:text-3xl fa-shapes"></i>
+                <div class="bg-blue-600 text-white p-2 rounded-2xl shadow-lg">
+                    <i class="fa-solid font-bold text-xl md:text-2xl fa-shapes"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-xl md:text-2xl text-slate-900 tracking-wide">幾何圖形「底與高」大冒險</h1>
-                    <p class="text-xs md:text-sm text-slate-500 font-semibold">對照課本概念：3組底高、上底與下底</p>
+                    <h1 class="font-extrabold text-lg md:text-xl text-slate-900 tracking-wide">幾何圖形「底與高」大冒險</h1>
+                    <p class="text-xs text-slate-500 font-semibold">對照課本概念：3組底高、上底與下底</p>
                 </div>
             </div>
 
             <!-- 圖形切換頁籤 -->
-            <div class="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-300 gap-1 flex-wrap">
-                <button id="btn-mode-triangle" onclick="changeShapeMode('triangle')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-blue-600 text-white shadow">
+            <div class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-300 gap-1 flex-wrap">
+                <button id="btn-mode-triangle" onclick="changeShapeMode('triangle')" class="mode-btn px-3 py-1 md:px-3.5 md:py-1.5 rounded-xl font-black text-xs md:text-sm transition flex items-center gap-1.5 bg-blue-600 text-white shadow">
                     🔺 三角形
                 </button>
-                <button id="btn-mode-parallelogram" onclick="changeShapeMode('parallelogram')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
+                <button id="btn-mode-parallelogram" onclick="changeShapeMode('parallelogram')" class="mode-btn px-3 py-1 md:px-3.5 md:py-1.5 rounded-xl font-bold text-xs md:text-sm transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
                     ▰ 平行四邊形
                 </button>
-                <button id="btn-mode-trapezoid" onclick="changeShapeMode('trapezoid')" class="mode-btn px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-bold text-sm md:text-lg transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
+                <button id="btn-mode-trapezoid" onclick="changeShapeMode('trapezoid')" class="mode-btn px-3 py-1 md:px-3.5 md:py-1.5 rounded-xl font-bold text-xs md:text-sm transition flex items-center gap-1.5 text-slate-700 hover:bg-slate-200">
                     ⏍ 梯形
                 </button>
                 
                 <!-- 比賽模式切換按鈕 -->
-                <button id="btn-mode-challenge" onclick="startChallengeMode()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black text-sm md:text-lg transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:brightness-110 active:scale-95">
+                <button id="btn-mode-challenge" onclick="startChallengeMode()" class="px-3 py-1 md:px-3.5 md:py-1.5 rounded-xl font-black text-xs md:text-sm transition flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:brightness-110 active:scale-95">
                     ⏱️ 1分鐘混合比賽
-                </button>
-            </div>
-
-            <!-- 得分與功能按鈕 -->
-            <div class="flex items-center gap-2 md:gap-3">
-                <div id="timer-box" class="hidden bg-amber-50 text-amber-900 px-3.5 py-1.5 rounded-2xl border-2 border-amber-400 font-extrabold text-base md:text-lg flex items-center gap-2 shadow-sm animate-pulse">
-                    <i class="fa-solid fa-stopwatch text-amber-600 text-xl"></i>
-                    <span>剩餘：<span id="timer-count" class="text-xl text-amber-700 font-black">60</span> 秒</span>
-                </div>
-
-                <div class="bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-2xl border-2 border-emerald-300 font-extrabold text-sm md:text-base flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-trophy text-amber-500 text-lg"></i>
-                    <span>得分：<span id="score-count" class="text-lg text-emerald-600 font-black">0</span> 題</span>
-                </div>
-
-                <!-- 排行榜按鈕 -->
-                <button id="btn-open-leaderboard" onclick="openLeaderboardModal()" class="bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border-2 border-amber-300 font-extrabold px-3 py-1.5 rounded-2xl text-sm md:text-base shadow-sm transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-ranking-star text-amber-600"></i> 排行榜
-                </button>
-
-                <button id="btn-next-question" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-3.5 py-1.5 rounded-2xl text-sm md:text-base shadow-md transition flex items-center gap-2">
-                    <i class="fa-solid fa-rotate-right"></i> 換下一題
                 </button>
             </div>
         </div>
@@ -122,17 +100,36 @@
         <section class="bg-white rounded-3xl p-3 md:p-4 border-2 border-slate-200 shadow-md flex flex-col justify-between relative overflow-hidden flex-1 min-h-0">
             
             <!-- 頂部資訊列：題目說明 + 切換底邊條 -->
-            <div class="flex flex-col gap-2 mb-1 shrink-0">
-                <!-- 標題與對照按鈕列 -->
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
+            <div class="flex flex-col gap-1.5 mb-1 shrink-0">
+                <!-- 標題與對照按鈕列 (移入得分、排行榜、換下一題) -->
+                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 flex-wrap gap-2">
                     <div class="flex items-center gap-3">
-                        <span id="shape-subtitle" class="font-extrabold text-slate-800 text-base md:text-lg">
+                        <span id="shape-subtitle" class="font-extrabold text-slate-800 text-sm md:text-base">
                             目前挑戰：<span id="current-shape-name" class="text-blue-600 font-black">三角形</span>
                         </span>
                     </div>
-                    <button id="btn-show-3-sets" onclick="open3SetsModal()" class="hidden bg-emerald-100 text-emerald-800 border-2 border-emerald-300 px-3 py-1 rounded-xl text-xs md:text-sm font-extrabold hover:bg-emerald-200 transition flex items-center gap-1.5">
-                        📐 觀看 3 組底與高觀念
-                    </button>
+
+                    <!-- 得分與功能按鈕組 -->
+                    <div class="flex items-center gap-2">
+                        <div id="timer-box" class="hidden bg-amber-50 text-amber-900 px-3 py-1 rounded-xl border-2 border-amber-400 font-extrabold text-xs md:text-sm flex items-center gap-1.5 shadow-sm animate-pulse">
+                            <i class="fa-solid fa-stopwatch text-amber-600"></i>
+                            <span>剩餘：<span id="timer-count" class="text-sm text-amber-700 font-black">60</span> 秒</span>
+                        </div>
+
+                        <div class="bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-xl border-2 border-emerald-300 font-extrabold text-xs md:text-sm flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-trophy text-amber-500"></i>
+                            <span>得分：<span id="score-count" class="text-sm text-emerald-600 font-black">0</span> 題</span>
+                        </div>
+
+                        <!-- 排行榜按鈕 -->
+                        <button id="btn-open-leaderboard" onclick="openLeaderboardModal()" class="bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-900 border-2 border-amber-300 font-extrabold px-2.5 py-1 rounded-xl text-xs md:text-sm shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-ranking-star text-amber-600"></i> 排行榜
+                        </button>
+
+                        <button id="btn-next-question" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-3 py-1 rounded-xl text-xs md:text-sm shadow-md transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate-right"></i> 換下一題
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 切換底邊選擇條 -->
@@ -440,8 +437,8 @@
         let completedCount = 0;
         let maxScore = 0;
 
-        // 精準度設定：由 10 調高至 3 單位，要求學生更精準瞄準垂足點
-        const ACCURACY_TOLERANCE = 3;
+        // 精準度設定：由 10 調高至 4 單位，要求學生更精準瞄準垂足點
+        const ACCURACY_TOLERANCE = 4;
 
         // 圖形幾何數據結構
         let shapeData = {
