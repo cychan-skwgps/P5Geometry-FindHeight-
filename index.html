@@ -162,10 +162,10 @@
                             <polygon id="poly-shape" points="0,0 0,0 0,0" fill="#E0F2FE" stroke="#0284C7" stroke-width="6" stroke-linejoin="round" class="transition-colors duration-300"/>
                             
                             <!-- 底邊高亮粗線 (藍色) -->
-                            <line id="base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="8" stroke-linecap="round"/>
+                            <line id="base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="6" stroke-linecap="round"/>
                             
                             <!-- 梯形上底高亮線 (藍色) -->
-                            <line id="top-base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="8" stroke-linecap="round" opacity="0"/>
+                            <line id="top-base-edge" x1="0" y1="0" x2="0" y2="0" stroke="#2563EB" stroke-width="6" stroke-linecap="round" opacity="0"/>
 
                             <!-- 「底」字標籤 -->
                             <g id="base-label-group">
@@ -178,13 +178,13 @@
                             </g>
 
                             <!-- 底邊延長虛線 -->
-                            <line id="base-extension" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="4" stroke-dasharray="8 8" opacity="0"/>
+                            <line id="base-extension" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="3" stroke-dasharray="8 8" opacity="0"/>
 
                             <!-- 垂直高線 (紅色) -->
-                            <line id="height-line" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="4" stroke-dasharray="8 8" opacity="0"/>
+                            <line id="height-line" x1="0" y1="0" x2="0" y2="0" stroke="#EF4444" stroke-width="3" stroke-dasharray="8 8" opacity="0"/>
                             
                             <!-- 直角符號 ∟ -->
-                            <path id="right-angle-symbol" d="" fill="rgba(239,68,68,0.2)" stroke="#EF4444" stroke-width="4" opacity="0"/>
+                            <path id="right-angle-symbol" d="" fill="rgba(239,68,68,0)" stroke="#EF4444" stroke-width="3" opacity="0"/>
 
                             <!-- 動態頂點觸控區與標示 -->
                             <g id="vertices-group">
@@ -208,7 +208,43 @@
                 </div>
 
                 <!-- 右側內嵌步驟任務卡 (垂直排列於畫布右側) -->
-                <div class="w-full lg:w-72 xl:w-80 flex flex-col justify-center gap-2 shrink-0 z-10 overflow-y-auto max-h-full">
+                <div class="w-full lg:w-72 xl:w-80 flex flex-col justify-start gap-2 shrink-0 z-10 overflow-y-auto max-h-full">
+                    
+                    <!-- 觀看 3 組底與高按鈕 -->
+                    <button id="btn-show-3-sets" onclick="open3SetsModal()" class="hidden w-full bg-emerald-100 text-emerald-800 border-2 border-emerald-300 p-2.5 rounded-2xl text-xs md:text-sm font-extrabold hover:bg-emerald-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                        📐 觀看 3 組底與高觀念
+                    </button>
+
+                    <!-- 頂部任務狀態與成功提示卡片 (位置恆定，避免步驟卡片位移) -->
+                    <div id="status-card" class="w-full bg-white/90 backdrop-blur-sm border-2 border-slate-200 p-2.5 md:p-3 rounded-2xl shadow-sm transition-all flex flex-col gap-1.5 shrink-0">
+                        <!-- 未作答狀態 (預設) -->
+                        <div id="status-initial" class="flex items-center gap-2">
+                            <div class="w-7 h-7 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 font-black text-xs">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-extrabold text-slate-800 text-xs md:text-sm leading-tight">解題任務</h3>
+                                <p class="text-[11px] text-slate-500 font-bold truncate">請依序完成下方 4 個作圖步驟</p>
+                            </div>
+                        </div>
+
+                        <!-- 答對狀態 (成功時原地切換) -->
+                        <div id="status-success" class="hidden flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-trophy text-amber-300 text-sm animate-bounce"></i>
+                                    </div>
+                                    <span class="text-base md:text-lg font-black tracking-wide text-white">答對了！</span>
+                                </div>
+                                <button id="btn-next-success" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-amber-950 font-black px-3 py-1 rounded-xl shadow text-xs md:text-sm transition flex items-center gap-1 border border-amber-200 shrink-0">
+                                    挑戰下一題 <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                            <p id="success-tip-text" class="text-xs text-emerald-50 font-bold leading-snug">成功擺正圖形，並親手畫出了精準的垂直高！</p>
+                        </div>
+                    </div>
+
                     <!-- 步驟 1 -->
                     <div id="card-step-1" class="step-card border-2 border-slate-200 bg-white/90 backdrop-blur-sm p-2.5 md:p-3 rounded-2xl flex items-center justify-between shadow-sm transition-all">
                         <div class="flex items-center gap-2.5 min-w-0">
@@ -906,13 +942,35 @@
             renderShape();
             updateStepUI();
 
-            successBanner.classList.add('hidden');
+            // 重置頂部狀態卡為未答對狀態
+            const statusCard = document.getElementById('status-card');
+            if (statusCard) {
+                statusCard.className = "w-full bg-white/90 backdrop-blur-sm border-2 border-slate-200 p-2.5 md:p-3 rounded-2xl shadow-sm transition-all flex flex-col gap-1.5 shrink-0";
+            }
+            document.getElementById('status-initial')?.classList.remove('hidden');
+            const statusSuccess = document.getElementById('status-success');
+            if (statusSuccess) {
+                statusSuccess.classList.add('hidden');
+                statusSuccess.classList.remove('flex');
+            }
         }
 
         function completeChallenge() {
             currentStep = 5;
             renderShape();
             updateStepUI();
+
+            // 切換頂部狀態卡為成功通關樣式
+            const statusCard = document.getElementById('status-card');
+            if (statusCard) {
+                statusCard.className = "w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white p-2.5 md:p-3 rounded-2xl shadow-md border-2 border-emerald-300 transition-all flex flex-col gap-2 shrink-0";
+            }
+            document.getElementById('status-initial')?.classList.add('hidden');
+            const statusSuccess = document.getElementById('status-success');
+            if (statusSuccess) {
+                statusSuccess.classList.remove('hidden');
+                statusSuccess.classList.add('flex');
+            }
 
             if (isChallenge) {
                 challengeScore++;
@@ -935,7 +993,6 @@
                     tipText.textContent = "成功擺正圖形，並親手畫出了精準的垂直高！";
                 }
 
-                successBanner.classList.remove('hidden');
                 confetti({ particleCount: 120, spread: 100, origin: { y: 0.6 } });
             }
         }
